@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>rtsp</title>
+    <style>
+       body,div,canvas{
+        margin:0;
+        padding: 0;
+        box-sizing:border-box;
+       }
+       canvas{
+        border:1px solid red;
+       }
+    </style>
+</head>
+<body>
+<div class="container">
+    <canvas width="320px" height="240px"></canvas>
+</div>
+<script src="//cdn.bootcss.com/socket.io/1.7.3/socket.io.min.js"></script>
+<script>
+    window.onload = function() {
+    var rtspCanvas = document.getElementsByTagName('canvas')[0],
+        rtspCtx = rtspCanvas.getContext("2d"),
+        windowWidth = window.innerWidth,
+        widthHeight = window.innerHeight;
+
+
+    rtspCanvas.style.width = windowWidth>500?'480px': windowWidth+'px';
+
+    var divSocket = io(location.origin + '/192.168.1.88:554');
+    divSocket.on('data', function(data) {
+
+        var bytes = new Uint8Array(data);
+
+        var blob = new Blob([bytes], {
+            type: 'application/octet-binary'
+        });
+
+        var url = URL.createObjectURL(blob);
+
+        var img = new Image;
+        img.onload = function() {
+            URL.revokeObjectURL(url);
+            //rtspCtx.clearRect(0,0, 320, 240);
+            rtspCtx.drawImage(img, 0, 0, 320, 240);
+        };
+        img.src = url;
+     });
+}
+</script>
+</body>
+</html>
