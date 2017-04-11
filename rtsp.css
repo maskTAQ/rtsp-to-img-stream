@@ -1,0 +1,61 @@
+html,body{
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+body, div, canvas {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.clearfix:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden
+}
+
+.clearfix {
+    *+height: 1%;
+}
+
+.full-screen {
+    transform: rotate(90deg);
+}
+
+#rtsp {
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid red;
+}
+
+#rtsp canvas {
+    float: left;
+    width: 100%;
+    transition: all 1s;
+}
+
+
+/*loader*/
+
+.ball-scale-multiple {
+    position: relative;
+    -webkit-transform: translateY(0px);
+  transform: translateY(0px);
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.ball-scale-multiple canvas {
+    opacity: 0.1;
+}
+
+.ball-scale-multiple .loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: -30px;
+    margin-left: -30px;
+    background: #ed5565;
+}
