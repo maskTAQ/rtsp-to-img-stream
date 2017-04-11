@@ -125,7 +125,7 @@ var RTSP = function () {
                 previewImg.onload = function () {
                     videoDomCtx.drawImage(previewImg, 0, 0, 480, 270);
                 };
-                previewImg.src = 'http://localhost:3000/logo.png';
+                previewImg.src = '/src/img/logo.png';
 
                 _this2.videoDomCtx = videoDomCtx;
                 rtspDom.appendChild(VideoCanvas);

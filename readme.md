@@ -10,10 +10,18 @@
 5. 尝试过动态改变过img的src属性来实现,但是体验太差,后转为canvas进行渲染,体验良好。
 
 ````javascript
-![缺陷]因为转成图片之后暂不支持音频。
+![缺陷]因为转成图片之后暂不支持音频;对转码硬件的需求和带宽的要求。
 ````
 
     感谢开源,让生活更美好。$ npm install https://github.com/agsh/rtsp-ffmpeg.git
-
 ## 实现
     基于rtsp-ffmpeg的二次封装。
+## 使用说明
+    npm install && npm start
+
+    激活后台硬件转码
+    发送post请求至http://localhost:3000/rtsp/ip:port[暂时不对参数做要求默认提供一个rtsp源]
+
+    输入网址浏览
+    localhost
+    http://localhost:3000/rtsp/ip:port

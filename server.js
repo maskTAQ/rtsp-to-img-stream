@@ -7,7 +7,7 @@ server.listen(3000, function() {
     console.log('server is runing');
 });
 
-app.use(express.static('./'));
+app.use('/src', express.static('src'));
 //所有正在激活的rtsp
 let liveSocketNames = [];
 
@@ -101,24 +101,6 @@ app.get('/rtsp/:name', function(req, res) {
             res.status(err.status).end();
         } else {
             console.log('Sent:', fileName);
-        }
-    });
-})
-
-app.get('/:fileName', function(req, res) {
-    var options = {
-        root: __dirname,
-        dotfiles: 'deny',
-        headers: {
-            'x-timestamp': Date.now(),
-            'x-sent': true
-        }
-    };
-    let fileName = req.params.script;
-    res.sendFile(fileName, options, function(err) {
-        if (err) {
-            console.log(err);
-            res.status(err.status).end();
         }
     });
 });
