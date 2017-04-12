@@ -12,13 +12,8 @@ app.use('/src', express.static('src'));
 let liveSocketNames = [];
 
 let createNewRtsp = (rtspUrl, socketName) => {
-    rtspUrl = "rtsp://mpv.cdn3.bigCDN.com:554/bigCDN/definst/mp4:bigbuckbunnyiphone_400.mp4"
-    let stream = new rtsp.FFMpeg({
-        input: rtspUrl,
-        rate: 30,
-        resolution: '960x540',
-        quality: 1000
-    });
+    //rtspUrl = "rtsp://mpv.cdn3.bigCDN.com:554/bigCDN/definst/mp4:bigbuckbunnyiphone_400.mp4"
+    let stream = new rtsp.FFMpeg({input: rtspUrl, rate: 30, resolution: '96x54', quality: 1000});
     stream.on('start', function() {
         console.log(rtspUrl + ' started');
     });
@@ -53,10 +48,10 @@ let createNewRtsp = (rtspUrl, socketName) => {
 app.post('/rtsp', function(req, res) {
     let {
         username = 'admin',
-            password = 'smt12345',
-            ip = '192.168.1.88',
-            port = '554',
-            channel = 1
+        password = 'smt12345',
+        ip = '192.168.1.88',
+        port = '554',
+        channel = 1
     } = req.query;
 
     let rtspUrl = `rtsp://${username}:${password}@${ip}:${port}/h264/ch${channel}/main/av_stream`,
@@ -76,10 +71,7 @@ app.post('/rtsp', function(req, res) {
 //访问吐出页面
 app.get('/rtsp', function(req, res) {
     if (!liveSocketNames.includes(req.query.socketName)) {
-        return res.json({
-            status: 0,
-            message: '标识符错误或者未激活'
-        });
+        return res.json({status: 0, message: '标识符错误或者未激活'});
     }
     return res.sendFile(__dirname + '/index.html');
 })

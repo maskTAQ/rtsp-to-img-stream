@@ -23,5 +23,24 @@
     发送post请求至http://localhost:3000/rtsp/ip:port[暂时不对参数做要求默认提供一个rtsp源]
 
     输入网址浏览
-    localhost
     http://localhost:3000/rtsp/ip:port
+
+    let demo = new RTSP(
+      //必须参数
+      {
+        username: '',
+        password: '',
+        ip: '',
+        port: '',
+        //缺省值为1
+        channel: 1,
+        //视频加载的dom对象
+        rtspDom,
+        //loading样式 缺省值为'ball-scale-multiple'
+        loadingClassName: 'ball-scale-multiple'
+    },
+    //可选参数
+    {
+        //缩略图路径 缺省值为'/src/img/logo.png'
+        thumbnailPath: '/src/img/logo.png'
+    });

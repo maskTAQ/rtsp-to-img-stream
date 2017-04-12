@@ -4,7 +4,7 @@ html, body {
     overflow: hidden;
 }
 
-body, div, canvas ,button,i{
+body, div, canvas ,button{
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -81,20 +81,24 @@ button {
     left: 0;
     width: 100%;
     height: 30px;
-    border: 1px solid red;
+    background: rgba(0, 0, 0, 0.5);
     transition: all 0.4s;
 }
 
 .tool-bar button {
-    float: right;
     margin: 5px;
     width: 20px;
     height: 20px;
+    background-size:100%!important;
 }
 
-.full-screen-button-icon {
-    display: block;
-    width: 100%;
-    height: 100%;
+.full-screen-button{
+    float: right;
     background: url('/src/img/full-screen-toggle.png') no-repeat center center;
+}
+.play .play-stop-button{
+  background: url('/src/img/stop.png') no-repeat center center;;
+}
+.stop .play-stop-button{
+  background:url('/src/img/play.png') no-repeat center center;;
 }
