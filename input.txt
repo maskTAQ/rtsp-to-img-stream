@@ -1,0 +1,5 @@
+{
+    "id": "34qnRvc8VhZhokinAAAA",
+    "connected": true,
+    "disconnected": false
+}

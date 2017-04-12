@@ -102,3 +102,10 @@ button {
 .stop .play-stop-button{
   background:url('/src/img/play.png') no-repeat center center;;
 }
+ /*error*/
+ #rtsp.load-error{
+   border: 1px solid #e9230b;
+ }
+ .load-error .tool-bar{
+   display: none;
+ }

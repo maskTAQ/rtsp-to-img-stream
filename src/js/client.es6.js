@@ -39,7 +39,8 @@ class RTSP {
         rtspDom.classList.add('play');
         //初始化全屏状态
         this.fullScreenStatus = false;
-
+        //初始化视频状态
+        this.error = false;
         //初始化定时器id
         this.timeoutId = {
             //一段时间后隐藏toolbar
@@ -71,6 +72,7 @@ class RTSP {
     createVideoCanvas() {
         return new Promise((resolve, reject) => {
             //将 canvas 添加到rtspdom中
+            const _this = this;
             const {rtspDom} = this.rtspInfo;
             const VideoCanvas = document.createElement("canvas");
             VideoCanvas.width = '480';
@@ -80,7 +82,8 @@ class RTSP {
             //设置预览图
             const previewImg = new Image();
             previewImg.onload = function() {
-                videoDomCtx.drawImage(previewImg, 0, 0, 480, 270);
+                //在视频加载失败的时候显示错误信息 不显示缩略图 加载缩略图是异步的
+                !_this.error && videoDomCtx.drawImage(previewImg, 0, 0, 480, 270);
             };
             previewImg.src = this.config.thumbnailPath;
 
@@ -136,10 +139,7 @@ class RTSP {
             //将toolbar添加到rtsp容器中
             rtspDom.appendChild(toolBarWrapperDom);
 
-            // //点击显示工具条
-            // this.tapToolBarShow(rtspDom, toolBarWrapperDom);
-            // //双击切换播放状态
-            // this.doubleTabTogglePlay(rtspDom);
+            //处理单机和双击事件
             this.tabEventListener(rtspDom, toolBarWrapperDom);
             resolve('toolbar构造成功');
         });
@@ -147,11 +147,6 @@ class RTSP {
     tabEventListener(rtspDom, toolBarWrapperDom) {
         let tabInterval = 0;
         rtspDom.addEventListener('click', () => {
-            // //取消上次延时未执行的方法
-            // clearTimeout(this.timeoutId.tabInterval);
-            // this.timeoutId.tabInterval = setTimeout(() => {
-            //     this.tapToolBarShow(rtspDom, toolBarWrapperDom);
-            // }, 3000);
             //距离上次点击间隔小于300ms 属于双击
             if (Date.now() - tabInterval < 300) {
                 //取消单击的方法
@@ -170,7 +165,7 @@ class RTSP {
                 }, 300);
 
             }
-        })
+        });
     }
     tapToolBarShow(toolBarWrapperDom) {
         //根据toolbar的透明度来判断是否显示
@@ -218,12 +213,16 @@ class RTSP {
         return ({}).toString.call(o);
     }
     linkServer() {
-        this.rtspSocket = io(location.origin + '/192.168.1.88:554', {
+        const {username, password, ip, port, channel} = this.rtspInfo;
+        const token = `${username}-${password}-${ip}-${port}-${channel}`;
+        //token跟的值是用于后台登录转码源的参数
+        const url = `${location.origin}/${ip}:${port}?token=${token}/ss`;
+        this.rtspSocket = io(url, {
             //重连次数
             reconnectionAttempts: 3,
             'timeout': 6000
         });
-
+        console.log(this.rtspSocket)
         const rtspSocketInfo = {
                 timeoutTime: 0
             },
@@ -324,28 +323,65 @@ class RTSP {
         rtspDom.classList.remove(loadingClassName);
     }
     showError(e) {
-        console.log(e);
+        const {videoDomCtx} = this;
+        const {rtspDom, loadingClassName} = this.rtspInfo;
+        videoDomCtx.clearRect(0, 0, 480, 270);
+        videoDomCtx.fillStyle = '#e9230b';
+        videoDomCtx.font = '48px 微软雅黑';
+        videoDomCtx.textAlign = 'center';
+        videoDomCtx.fillText('登录失败', 240, 159);
+
+        //更新状态
+        this.live = false;
+        this.error = true;
+        rtspDom.classList.add('load-error');
+        rtspDom.classList.remove(loadingClassName);
     }
 }
 
 //let demo = new RTSPVideo();
 
 window.onload = function() {
-    const href = location.href,
-        ip_port_index = href.lastIndexOf('/') + 1,
-        ip_port_arr = href.substring(ip_port_index).split(':');
+    /*
+  url取参数->解码->调用RTSP
+  */
+    const GetRequest = () => {
+        let url = location.search; //获取url中"?"符后的字串
+        let theRequest = {};
+        if (url.indexOf("?") != -1) {
+            let str = url.substr(1);
+            let strs = str.split("&");
+            for (let i = 0; i < strs.length; i++) {
+                theRequest[strs[i].split("=")[0]] = unescape(strs[i].split("=")[1]);
+            }
+        }
+        return theRequest;
+    }
+    const urlUnencrypt = (code) => {
+        code = unescape(code);
+        let c = String.fromCharCode(code.charCodeAt(0) - code.length);
+        for (let i = 1; i < code.length; i++) {
+            c += String.fromCharCode(code.charCodeAt(i) - c.charCodeAt(i - 1));
+        }
+        return c;
+    }
+    const params = GetRequest();
 
-    //取出url中的ip和port
-    const [ip,
-        port] = ip_port_arr;
-    window.rtspDom = document.getElementById('rtsp');
+    try {
+        //从url中取参数
+        var {username, password, ip, port, channel} = JSON.parse(urlUnencrypt(params.token));
+    } catch (e) {
+        alert('地址非法');
+    }
+    const rtspDom = document.getElementById('rtsp');
     //加载rtsp
+
     let demo = new RTSP({
-        username: 'admin',
-        password: 'smt12345',
-        ip: '192.168.1.88',
-        port: '554',
-        channel: 1,
+        username: username,
+        password: password,
+        ip: ip,
+        port: port,
+        channel: channel,
         rtspDom,
         loadingClassName: 'ball-scale-multiple'
     }, {

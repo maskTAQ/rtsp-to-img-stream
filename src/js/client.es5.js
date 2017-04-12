@@ -1,7 +1,5 @@
 'use strict';
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -46,7 +44,7 @@ var RTSP = function () {
     _createClass(RTSP, [{
         key: 'init',
         value: function init() {
-            var _this = this;
+            var _this2 = this;
 
             var rtspDom = this.rtspInfo.rtspDom;
 
@@ -60,7 +58,8 @@ var RTSP = function () {
             rtspDom.classList.add('play');
             //初始化全屏状态
             this.fullScreenStatus = false;
-
+            //初始化视频状态
+            this.error = false;
             //初始化定时器id
             this.timeoutId = {
                 //一段时间后隐藏toolbar
@@ -79,29 +78,30 @@ var RTSP = function () {
             this.createVideoCanvas()
             //生成loading组件
             .then(function (m) {
-                var rtspDom = _this.rtspDom,
-                    showLoader = _this.showLoader;
+                var rtspDom = _this2.rtspDom,
+                    showLoader = _this2.showLoader;
                 //创建loading元素
 
-                return _this.createLoadingComponent();
+                return _this2.createLoadingComponent();
             })
             //生成工具条
             .then(function (m) {
-                return _this.createToolbar();
+                return _this2.createToolbar();
             })
             //激活视频
             .then(function (m) {
-                _this.linkServer();
+                _this2.linkServer();
             });
         }
     }, {
         key: 'createVideoCanvas',
         value: function createVideoCanvas() {
-            var _this2 = this;
+            var _this3 = this;
 
             return new Promise(function (resolve, reject) {
                 //将 canvas 添加到rtspdom中
-                var rtspDom = _this2.rtspInfo.rtspDom;
+                var _this = _this3;
+                var rtspDom = _this3.rtspInfo.rtspDom;
 
                 var VideoCanvas = document.createElement("canvas");
                 VideoCanvas.width = '480';
@@ -111,15 +111,16 @@ var RTSP = function () {
                 //设置预览图
                 var previewImg = new Image();
                 previewImg.onload = function () {
-                    videoDomCtx.drawImage(previewImg, 0, 0, 480, 270);
+                    //在视频加载失败的时候显示错误信息 不显示缩略图 加载缩略图是异步的
+                    !_this.error && videoDomCtx.drawImage(previewImg, 0, 0, 480, 270);
                 };
-                previewImg.src = _this2.config.thumbnailPath;
+                previewImg.src = _this3.config.thumbnailPath;
 
-                _this2.videoDomCtx = videoDomCtx;
+                _this3.videoDomCtx = videoDomCtx;
                 rtspDom.appendChild(VideoCanvas);
 
                 //绑定canvas dom到实例上
-                _this2.videoDom = VideoCanvas;
+                _this3.videoDom = VideoCanvas;
 
                 resolve('video canvas 构造成功');
             });
@@ -127,11 +128,11 @@ var RTSP = function () {
     }, {
         key: 'createLoadingComponent',
         value: function createLoadingComponent() {
-            var _this3 = this;
+            var _this4 = this;
 
             return new Promise(function (resolve, reject) {
                 //构建  loading组件
-                var rtspDom = _this3.rtspInfo.rtspDom,
+                var rtspDom = _this4.rtspInfo.rtspDom,
                     loadersDomArr = [];
 
                 for (var i = 0; i < 3; i++) {
@@ -149,10 +150,10 @@ var RTSP = function () {
     }, {
         key: 'createToolbar',
         value: function createToolbar() {
-            var _this4 = this;
+            var _this5 = this;
 
             return new Promise(function (resolve, reject) {
-                var rtspDom = _this4.rtspInfo.rtspDom;
+                var rtspDom = _this5.rtspInfo.rtspDom;
                 //创建toolbar容器
                 var toolBarWrapperDom = document.createElement("span");
                 toolBarWrapperDom.className = 'tool-bar';
@@ -160,7 +161,7 @@ var RTSP = function () {
                 var fullScreenButton = document.createElement("button");
                 fullScreenButton.className = 'full-screen-button';
                 //这里的闭包是存储 容器的宽高信息
-                var toggleFullScreen = _this4.toggleFullScreen().bind(_this4);
+                var toggleFullScreen = _this5.toggleFullScreen().bind(_this5);
                 fullScreenButton.addEventListener('click', function () {
                     toggleFullScreen();
                 });
@@ -170,47 +171,39 @@ var RTSP = function () {
                 var playStopButton = document.createElement("button");
                 playStopButton.className = 'play-stop-button';
                 playStopButton.addEventListener('click', function () {
-                    _this4.doubleTabTogglePlay();
+                    _this5.doubleTabTogglePlay();
                 });
                 toolBarWrapperDom.appendChild(playStopButton);
                 //将toolbar添加到rtsp容器中
                 rtspDom.appendChild(toolBarWrapperDom);
 
-                // //点击显示工具条
-                // this.tapToolBarShow(rtspDom, toolBarWrapperDom);
-                // //双击切换播放状态
-                // this.doubleTabTogglePlay(rtspDom);
-                _this4.tabEventListener(rtspDom, toolBarWrapperDom);
+                //处理单机和双击事件
+                _this5.tabEventListener(rtspDom, toolBarWrapperDom);
                 resolve('toolbar构造成功');
             });
         }
     }, {
         key: 'tabEventListener',
         value: function tabEventListener(rtspDom, toolBarWrapperDom) {
-            var _this5 = this;
+            var _this6 = this;
 
             var tabInterval = 0;
             rtspDom.addEventListener('click', function () {
-                // //取消上次延时未执行的方法
-                // clearTimeout(this.timeoutId.tabInterval);
-                // this.timeoutId.tabInterval = setTimeout(() => {
-                //     this.tapToolBarShow(rtspDom, toolBarWrapperDom);
-                // }, 3000);
                 //距离上次点击间隔小于300ms 属于双击
                 if (Date.now() - tabInterval < 300) {
                     //取消单击的方法
-                    clearTimeout(_this5.timeoutId.tabInterval);
+                    clearTimeout(_this6.timeoutId.tabInterval);
                     //重置时间间隔避免下次单机也判断为双击
                     tabInterval = 0;
                     //执行双击的方法
-                    _this5.doubleTabTogglePlay();
+                    _this6.doubleTabTogglePlay();
                     console.log('双击');
                 } else {
                     tabInterval = Date.now();
-                    _this5.timeoutId.tabInterval = setTimeout(function () {
+                    _this6.timeoutId.tabInterval = setTimeout(function () {
                         //执行单击的方法
                         console.log('单击');
-                        _this5.tapToolBarShow(toolBarWrapperDom);
+                        _this6.tapToolBarShow(toolBarWrapperDom);
                     }, 300);
                 }
             });
@@ -273,14 +266,24 @@ var RTSP = function () {
     }, {
         key: 'linkServer',
         value: function linkServer() {
-            var _this6 = this;
+            var _this7 = this;
 
-            this.rtspSocket = io(location.origin + '/192.168.1.88:554', {
+            var _rtspInfo = this.rtspInfo,
+                username = _rtspInfo.username,
+                password = _rtspInfo.password,
+                ip = _rtspInfo.ip,
+                port = _rtspInfo.port,
+                channel = _rtspInfo.channel;
+
+            var token = username + '-' + password + '-' + ip + '-' + port + '-' + channel;
+            //token跟的值是用于后台登录转码源的参数
+            var url = location.origin + '/' + ip + ':' + port + '?token=' + token + '/ss';
+            this.rtspSocket = io(url, {
                 //重连次数
                 reconnectionAttempts: 3,
                 'timeout': 6000
             });
-
+            console.log(this.rtspSocket);
             var rtspSocketInfo = {
                 timeoutTime: 0
             },
@@ -290,7 +293,7 @@ var RTSP = function () {
                 if (rtspSocketInfo.timeoutTime < 3) {
                     rtspSocketInfo.timeoutTime++;
                 } else {
-                    _this6.showError('连接超时');
+                    _this7.showError('连接超时');
                 }
             });
             //连接错误
@@ -298,23 +301,23 @@ var RTSP = function () {
                 if (e === 'timeout') {
                     return;
                 }
-                _this6.showError(e);
+                _this7.showError(e);
             });
 
             //连接成功之后 接收数据
             rtspSocket.on('data', function (data) {
                 //如之前是在加载中 隐藏加载组件
-                if (!_this6.live) {
-                    _this6.hideLoader();
+                if (!_this7.live) {
+                    _this7.hideLoader();
                 }
-                _this6.liveImg(data);
+                _this7.liveImg(data);
             });
 
             //在谷歌在超时的回调函数并不会起作用
             setTimeout(function () {
-                if (!_this6.live) {
-                    _this6.hideLoader();
-                    _this6.showError('连接超时');
+                if (!_this7.live) {
+                    _this7.hideLoader();
+                    _this7.showError('连接超时');
                 }
             }, 15000);
         }
@@ -346,9 +349,9 @@ var RTSP = function () {
     }, {
         key: 'showLoader',
         value: function showLoader() {
-            var _rtspInfo = this.rtspInfo,
-                rtspDom = _rtspInfo.rtspDom,
-                loadingClassName = _rtspInfo.loadingClassName;
+            var _rtspInfo2 = this.rtspInfo,
+                rtspDom = _rtspInfo2.rtspDom,
+                loadingClassName = _rtspInfo2.loadingClassName;
 
             this.live = false;
             rtspDom.classList.add(loadingClassName);
@@ -356,9 +359,9 @@ var RTSP = function () {
     }, {
         key: 'hideLoader',
         value: function hideLoader() {
-            var _rtspInfo2 = this.rtspInfo,
-                rtspDom = _rtspInfo2.rtspDom,
-                loadingClassName = _rtspInfo2.loadingClassName;
+            var _rtspInfo3 = this.rtspInfo,
+                rtspDom = _rtspInfo3.rtspDom,
+                loadingClassName = _rtspInfo3.loadingClassName;
 
             this.live = true;
             rtspDom.classList.remove(loadingClassName);
@@ -366,7 +369,22 @@ var RTSP = function () {
     }, {
         key: 'showError',
         value: function showError(e) {
-            console.log(e);
+            var videoDomCtx = this.videoDomCtx;
+            var _rtspInfo4 = this.rtspInfo,
+                rtspDom = _rtspInfo4.rtspDom,
+                loadingClassName = _rtspInfo4.loadingClassName;
+
+            videoDomCtx.clearRect(0, 0, 480, 270);
+            videoDomCtx.fillStyle = '#e9230b';
+            videoDomCtx.font = '48px 微软雅黑';
+            videoDomCtx.textAlign = 'center';
+            videoDomCtx.fillText('登录失败', 240, 159);
+
+            //更新状态
+            this.live = false;
+            this.error = true;
+            rtspDom.classList.add('load-error');
+            rtspDom.classList.remove(loadingClassName);
         }
     }], [{
         key: 'required',
@@ -381,7 +399,7 @@ var RTSP = function () {
 //let demo = new RTSPVideo();
 
 var _initialiseProps = function _initialiseProps() {
-    var _this7 = this;
+    var _this8 = this;
 
     this.toggleFullScreen = function () {
         var _window2 = window,
@@ -389,8 +407,8 @@ var _initialiseProps = function _initialiseProps() {
             outerHeight = _window2.outerHeight;
 
 
-        var rtspDom = _this7.rtspInfo.rtspDom;
-        var videoDom = _this7.videoDom;
+        var rtspDom = _this8.rtspInfo.rtspDom;
+        var videoDom = _this8.videoDom;
 
         var _rtspDom$style = rtspDom.style,
             width = _rtspDom$style.width,
@@ -400,9 +418,9 @@ var _initialiseProps = function _initialiseProps() {
 
         var excursion = Math.abs((outerWidth - outerHeight) / 2);
         return function () {
-            if (_this7.fullScreenStatus) {
+            if (_this8.fullScreenStatus) {
                 rtspDom.classList.remove('full-screen');
-                _this7.addStyle(rtspDom, {
+                _this8.addStyle(rtspDom, {
                     width: width,
                     height: height,
                     marginTop: 0,
@@ -410,37 +428,64 @@ var _initialiseProps = function _initialiseProps() {
                 });
             } else {
                 rtspDom.classList.add('full-screen');
-                _this7.addStyle(rtspDom, {
+                _this8.addStyle(rtspDom, {
                     width: outerHeight + 'px',
                     height: outerWidth + 'px',
                     marginTop: excursion + 'px',
                     marginLeft: -excursion + 'px'
                 });
             }
-            _this7.fullScreenStatus = !_this7.fullScreenStatus;
+            _this8.fullScreenStatus = !_this8.fullScreenStatus;
         };
     };
 };
 
 window.onload = function () {
-    var href = location.href,
-        ip_port_index = href.lastIndexOf('/') + 1,
-        ip_port_arr = href.substring(ip_port_index).split(':');
+    /*
+    url取参数->解码->调用RTSP
+    */
+    var GetRequest = function GetRequest() {
+        var url = location.search; //获取url中"?"符后的字串
+        var theRequest = {};
+        if (url.indexOf("?") != -1) {
+            var str = url.substr(1);
+            var strs = str.split("&");
+            for (var i = 0; i < strs.length; i++) {
+                theRequest[strs[i].split("=")[0]] = unescape(strs[i].split("=")[1]);
+            }
+        }
+        return theRequest;
+    };
+    var urlUnencrypt = function urlUnencrypt(code) {
+        code = unescape(code);
+        var c = String.fromCharCode(code.charCodeAt(0) - code.length);
+        for (var i = 1; i < code.length; i++) {
+            c += String.fromCharCode(code.charCodeAt(i) - c.charCodeAt(i - 1));
+        }
+        return c;
+    };
+    var params = GetRequest();
 
-    //取出url中的ip和port
-
-    var _ip_port_arr = _slicedToArray(ip_port_arr, 2),
-        ip = _ip_port_arr[0],
-        port = _ip_port_arr[1];
-
-    window.rtspDom = document.getElementById('rtsp');
+    try {
+        //从url中取参数
+        var _JSON$parse = JSON.parse(urlUnencrypt(params.token)),
+            username = _JSON$parse.username,
+            password = _JSON$parse.password,
+            ip = _JSON$parse.ip,
+            port = _JSON$parse.port,
+            channel = _JSON$parse.channel;
+    } catch (e) {
+        alert('地址非法');
+    }
+    var rtspDom = document.getElementById('rtsp');
     //加载rtsp
+
     var demo = new RTSP({
-        username: 'admin',
-        password: 'smt12345',
-        ip: '192.168.1.88',
-        port: '554',
-        channel: 1,
+        username: username,
+        password: password,
+        ip: ip,
+        port: port,
+        channel: channel,
         rtspDom: rtspDom,
         loadingClassName: 'ball-scale-multiple'
     }, {
