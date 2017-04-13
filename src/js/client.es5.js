@@ -196,7 +196,8 @@ var RTSP = function () {
                     //重置时间间隔避免下次单机也判断为双击
                     tabInterval = 0;
                     //执行双击的方法
-                    _this6.doubleTabTogglePlay(rtspDom);
+                    console.log(rtspDom);
+                    _this6.doubleTabTogglePlay();
                     console.log('双击');
                 } else {
                     tabInterval = Date.now();
@@ -227,10 +228,11 @@ var RTSP = function () {
         }
     }, {
         key: 'doubleTabTogglePlay',
-        value: function doubleTabTogglePlay(rtspDom) {
+        value: function doubleTabTogglePlay() {
+            var rtspDom = this.rtspInfo.rtspDom;
             //如果当前视频正在加载 return
-            console.log(rtspDom.classList);
-            if ([].slice.call(rtspDom.classList).includes(this.rtspInfo.loadingClassName)) {
+
+            if (Array.from(rtspDom.classList).includes(this.rtspInfo.loadingClassName)) {
                 return console.log(1);
             }
             if (this.live) {
