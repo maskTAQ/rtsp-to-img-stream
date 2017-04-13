@@ -14,6 +14,8 @@
 ## 实现
     基于rtsp-ffmpeg的二次封装。
 ## 使用说明
+    将assets/ffmpeg/bin目录添加至环境变量
+    
     npm install && npm start
 
     激活socket视频转码组
