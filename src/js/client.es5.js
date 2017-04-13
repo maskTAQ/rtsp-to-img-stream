@@ -277,9 +277,9 @@ var RTSP = function () {
                 port = _rtspInfo.port,
                 channel = _rtspInfo.channel;
 
-            var token = username + '-' + password + '-' + ip + '-' + port + '-' + channel;
+            var token = username + '1:' + password + ':' + ip + ':' + port + ':' + channel;
             //token跟的值是用于后台登录转码源的参数
-            var url = location.origin + '/' + ip + ':' + port + '?token=' + token + '/ss';
+            var url = location.origin + '/' + ip + ':' + port + '?token=' + token;
             this.rtspSocket = io(url, {
                 //重连次数
                 reconnectionAttempts: 3,

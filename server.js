@@ -27,8 +27,21 @@ app.use('/src', express.static('src'));
 //所有正在激活的视频组 [{token:'ip:port',count:0}]
 let liveRtspStream = [];
 
+//解析socket的登录参数判断是否合法
+const getToken = (url) => {
+    let theRequest = {};
+    if (url.indexOf("?") != -1) {
+        let str = url.substr(url.indexOf("?") + 1);
+        let strs = str.split("&");
+        for (let i = 0; i < strs.length; i++) {
+            theRequest[strs[i].split("=")[0]] = unescape(strs[i].split("=")[1]);
+        }
+    }
+    return theRequest;
+
+};
 //新建视频组
-let createNewRtsp = (rtspUrl, socketName) => {
+let createNewRtsp = (rtspUrl, socketName, loginInfo) => {
     //rtspUrl = "rtsp://mpv.cdn3.bigCDN.com:554/bigCDN/definst/mp4:bigbuckbunnyiphone_400.mp4"
 
     //转码配置
@@ -43,6 +56,26 @@ let createNewRtsp = (rtspUrl, socketName) => {
     //新建socket组
     let ns = io.of('/' + socketName);
     ns.on('connection', function(wsocket) {
+        //判断登录信息是否合法 不合法退出 合法发送实时的图片流
+        let token = getToken(wsocket.request.url).token;
+        let [un,
+            pw,
+            ip,
+            pt] = token.split(':');
+
+        const verifyParams = {
+            username: un,
+            password: pw,
+            ip: ip,
+            port: pt
+        };
+
+        for (let item in loginInfo) {
+            if (loginInfo[item] != verifyParams[item]) {
+                return console.log(`${item}参数错误`);
+            }
+        }
+
         console.log(socketName + ' 新增用户连接');
         //初始化当前视频组的索引值
         let liveRtspStreamIndex = NaN;
@@ -74,18 +107,6 @@ let createNewRtsp = (rtspUrl, socketName) => {
     });
 
 }
-const getToken = (url) => {
-    let theRequest = {};
-    if (url.indexOf("?") != -1) {
-        let str = url.substr(url.indexOf("?") + 1);
-        let strs = str.split("&");
-        for (let i = 0; i < strs.length; i++) {
-            theRequest[strs[i].split("=")[0]] = unescape(strs[i].split("=")[1]);
-        }
-    }
-    return theRequest;
-
-};
 
 //当有新用户连接 判断售票员是否在转码 通过socket连接触发
 // io.on('connection', function(socket) {
@@ -141,7 +162,7 @@ app.post('/rtsp', function(req, res) {
     //转码视频流
     liveRtspStream.push({token: socketName, count: 0});
     res.json({Status: 1, Message: '激活成功'});
-    return createNewRtsp(rtspUrl, socketName);
+    return createNewRtsp(rtspUrl, socketName, req.body);
 
 });
 

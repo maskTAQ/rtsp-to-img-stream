@@ -215,9 +215,9 @@ class RTSP {
     }
     linkServer() {
         const {username, password, ip, port, channel} = this.rtspInfo;
-        const token = `${username}-${password}-${ip}-${port}-${channel}`;
+        const token = `${username}1:${password}:${ip}:${port}:${channel}`;
         //token跟的值是用于后台登录转码源的参数
-        const url = `${location.origin}/${ip}:${port}?token=${token}/ss`;
+        const url = `${location.origin}/${ip}:${port}?token=${token}`;
         this.rtspSocket = io(url, {
             //重连次数
             reconnectionAttempts: 3,
