@@ -1,16 +1,33 @@
-const express = require('express'),
-    app = express(),
-    server = require('http').Server(app),
-    io = require('socket.io')(server),
-    rtsp = require('rtsp-ffmpeg');
+/*
+思路说明
+1. 通过post请求激活->新建视频源组[客户端连接socket 地址为 ip:port?username:password:ip:port]
+2. 当有新的socket连接并且是视频组的第一次连接则开始转码
+3. 当视频组最后一个用户断开则停止解码
+*/
+//项目依赖
+const express = require('express');
+const rtsp = require('rtsp-ffmpeg');
+const bodyParser = require('body-parser');
+
+//启动 socket服务
+const app = express();
+const server = require('http').Server(app);
+const io = require('socket.io')(server);
 server.listen(3000, function() {
     console.log('server is runing');
 });
-var fs = require("fs");
+
+//解析post参数
+app.use(bodyParser.json()); // for parsing application/json
+app.use(bodyParser.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
+
+//资源目录
 app.use('/src', express.static('src'));
-//所有正在激活的rtsp [{token:'ip:port',count:0}]
+
+//所有正在激活的视频组 [{token:'ip:port',count:0}]
 let liveRtspStream = [];
 
+//新建视频组
 let createNewRtsp = (rtspUrl, socketName) => {
     //rtspUrl = "rtsp://mpv.cdn3.bigCDN.com:554/bigCDN/definst/mp4:bigbuckbunnyiphone_400.mp4"
 
@@ -27,34 +44,32 @@ let createNewRtsp = (rtspUrl, socketName) => {
     let ns = io.of('/' + socketName);
     ns.on('connection', function(wsocket) {
         console.log(socketName + ' 新增用户连接');
+        //初始化当前视频组的索引值
         let liveRtspStreamIndex = NaN;
         for ([i, item]of liveRtspStream.entries()) {
             if (item.token === socketName) {
+                //更新当前视频组的索引值
                 liveRtspStreamIndex = i;
             }
         }
-
-        //如果是新建立的转码组
-        if (!liveRtspStreamIndex && liveRtspStreamIndex != 0) {
-            liveRtspStream.push({token: socketName, count: 1});
-            liveRtspStreamIndex = 0;
-        } else {
-            liveRtspStream[liveRtspStreamIndex].count++;
-        }
-
-        var pipeStream = function(data) {
+        //更新视频组的用户数量
+        liveRtspStream[liveRtspStreamIndex].count++;
+        console.log(liveRtspStream);
+        //实时转码通过socket传输数据
+        let pipeStream = function(data) {
             wsocket.emit('data', data);
         };
         stream.on('data', pipeStream);
 
-        //当此视频源无人连接则终止转码
+        //用户断开连接
         wsocket.on('disconnect', function() {
             console.log(socketName + ' 断开用户连接');
+            //更新视频组的连接数
             liveRtspStream[liveRtspStreamIndex].count--;
-            if (liveRtspStream[liveRtspStreamIndex].count == 0) {
-                stream.removeListener('data', pipeStream);
-            }
+            console.log(liveRtspStream);
 
+            //每当用户断开连接 就注销对应的回调函数 当绑定的回调函数数量为0 rtsp-ffmpeg内部会停止转码
+            stream.removeListener('data', pipeStream);
         });
     });
 
@@ -72,29 +87,30 @@ const getToken = (url) => {
 
 };
 
-//当有新用户连接 判断售票员是否在转码
-io.on('connection', function(socket) {
-    //获取前端传递的参数
-    let params = getToken(socket.request.url).token.split('-');
-    let [username,
-        password,
-        ip,
-        port,
-        channel = 1] = params;
-
-    let rtspUrl = `rtsp://${username}:${password}@${ip}:${port}/h264/ch${channel}/main/av_stream`,
-        socketName = ip + ':' + port;
-
-    //如果当前视频流正在转码 则返回
-    for ([i, item]of liveRtspStream.entries()) {
-        if (item.token == socketName && item.count > 0) {
-            return console.log(socketName + ' 正在转码中');
-        }
-    }
-
-    //转码视频流
-    return createNewRtsp(rtspUrl, socketName);
-});
+//当有新用户连接 判断售票员是否在转码 通过socket连接触发
+// io.on('connection', function(socket) {
+//     //获取前端传递的参数
+//     let params = getToken(socket.request.url).token.split('-');
+//     let [username,
+//         password,
+//         ip,
+//         port,
+//         channel = 1] = params;
+//
+//     let rtspUrl = `rtsp://${username}:${password}@${ip}:${port}/h264/ch${channel}/main/av_stream`,
+//         socketName = ip + ':' + port;
+//
+//     //如果当前视频组已激活 则返回
+//     for ([i, item]of liveRtspStream.entries()) {
+//         if (item.token == socketName && item.count > 0) {
+//             console.log(liveRtspStream);
+//             return console.log(socketName + ' 正在转码中');
+//         }
+//     }
+//
+//     //转码视频流
+//     return createNewRtsp(rtspUrl, socketName);
+// });
 
 //激活rtsp转码 通过post请求手动激活视频源
 app.post('/rtsp', function(req, res) {
@@ -104,19 +120,27 @@ app.post('/rtsp', function(req, res) {
         ip,
         port,
         channel = 1
-    } = req.query;
+    } = req.body;
 
-    let rtspUrl = `rtsp://${username}:${password}@${ip}:${port}/h264/ch${channel}/main/av_stream`,
-        socketName = ip + ':' + port;
+    if (!username || !password || !ip || !port) {
+        return res.json({Status: 0, Message: '请完成填写登录信息', Data: req.body});
+    }
 
-    console.log(rtspUrl);
-    //如果当前视频流正在转码 则返回
-    if (liveRtspStream.includes(socketName)) {
-        console.log('返回以加载的')
-        return
+    const rtspUrl = `rtsp://${username}:${password}@${ip}:${port}/h264/ch${channel}/main/av_stream`;
+    const socketName = ip + ':' + port;
+
+    //如果当前视频组已激活 则返回
+    for ([i, item]of liveRtspStream.entries()) {
+        if (item.token == socketName) {
+            console.log(socketName + ' 正在转码中');
+            res.json({Status: 1, Message: '此视频流已激活'});
+            return;
+        }
     }
 
     //转码视频流
+    liveRtspStream.push({token: socketName, count: 0});
+    res.json({Status: 1, Message: '激活成功'});
     return createNewRtsp(rtspUrl, socketName);
 
 });

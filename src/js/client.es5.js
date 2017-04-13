@@ -196,7 +196,7 @@ var RTSP = function () {
                     //重置时间间隔避免下次单机也判断为双击
                     tabInterval = 0;
                     //执行双击的方法
-                    _this6.doubleTabTogglePlay();
+                    _this6.doubleTabTogglePlay(rtspDom);
                     console.log('双击');
                 } else {
                     tabInterval = Date.now();
@@ -227,10 +227,8 @@ var RTSP = function () {
         }
     }, {
         key: 'doubleTabTogglePlay',
-        value: function doubleTabTogglePlay() {
-            var rtspDom = this.rtspInfo.rtspDom;
+        value: function doubleTabTogglePlay(rtspDom) {
             //如果当前视频正在加载 return
-
             if ([].slice.call(rtspDom.classList).includes(this.rtspInfo.loadingClassName)) {
                 return console.log(1);
             }
@@ -243,6 +241,8 @@ var RTSP = function () {
     }, {
         key: 'play',
         value: function play() {
+            var rtspDom = this.rtspInfo.rtspDom;
+
             this.showLoader();
             rtspDom.classList.remove('stop');
             rtspDom.classList.add('play');
@@ -252,6 +252,8 @@ var RTSP = function () {
     }, {
         key: 'stop',
         value: function stop() {
+            var rtspDom = this.rtspInfo.rtspDom;
+
             rtspDom.classList.add('stop');
             rtspDom.classList.remove('play');
             //断开socket连接

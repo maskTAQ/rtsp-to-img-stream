@@ -154,7 +154,7 @@ class RTSP {
                 //重置时间间隔避免下次单机也判断为双击
                 tabInterval = 0;
                 //执行双击的方法
-                this.doubleTabTogglePlay();
+                this.doubleTabTogglePlay(rtspDom);
                 console.log('双击');
             } else {
                 tabInterval = Date.now();
@@ -182,8 +182,7 @@ class RTSP {
             }, 3000);
         }
     }
-    doubleTabTogglePlay() {
-        const {rtspDom} = this.rtspInfo;
+    doubleTabTogglePlay(rtspDom) {
         //如果当前视频正在加载 return
         if ([].slice.call(rtspDom.classList).includes(this.rtspInfo.loadingClassName)) {
             return console.log(1);
@@ -196,6 +195,7 @@ class RTSP {
 
     }
     play() {
+        const {rtspDom} = this.rtspInfo;
         this.showLoader();
         rtspDom.classList.remove('stop');
         rtspDom.classList.add('play');
@@ -203,6 +203,7 @@ class RTSP {
         this.rtspSocket.connect();
     }
     stop() {
+        const {rtspDom} = this.rtspInfo;
         rtspDom.classList.add('stop');
         rtspDom.classList.remove('play');
         //断开socket连接
