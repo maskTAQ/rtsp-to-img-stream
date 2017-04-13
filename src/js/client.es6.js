@@ -184,6 +184,7 @@ class RTSP {
     }
     doubleTabTogglePlay(rtspDom) {
         //如果当前视频正在加载 return
+        console.log(rtspDom.classList);
         if ([].slice.call(rtspDom.classList).includes(this.rtspInfo.loadingClassName)) {
             return console.log(1);
         }
@@ -215,19 +216,27 @@ class RTSP {
     }
     linkServer() {
         const {username, password, ip, port, channel} = this.rtspInfo;
-        const token = `${username}1:${password}:${ip}:${port}:${channel}`;
-        //token跟的值是用于后台登录转码源的参数
+        //用于后台验证登录信息是否正确
+        const token = `${username}:${password}:${ip}:${port}:${channel}`;
+        //凭借socket地址 ip:port 是对应的socket视频组 token为登录信息
         const url = `${location.origin}/${ip}:${port}?token=${token}`;
-        this.rtspSocket = io(url, {
+        const rtspSocket = io(url, {
             //重连次数
             reconnectionAttempts: 3,
+            //超时时间
             'timeout': 6000
         });
-        console.log(this.rtspSocket)
+
+        //将socket实例绑定到实例上
+        this.rtspSocket = rtspSocket;
+        //用于判断已经尝试重连次数
         const rtspSocketInfo = {
-                timeoutTime: 0
-            },
-            rtspSocket = this.rtspSocket;
+            timeoutTime: 0
+        };
+
+        rtspSocket.on('login_error', () => {
+            this.showError('登录失败,请检查登录信息!');
+        });
         //连接超时
         rtspSocket.on('connect_timeout', () => {
             if (rtspSocketInfo.timeoutTime < 3) {
@@ -316,7 +325,7 @@ class RTSP {
         const {rtspDom, loadingClassName} = this.rtspInfo;
         this.live = false;
         rtspDom.classList.add(loadingClassName);
-
+        rtspDom.classList.remove('load-error');
     }
     hideLoader() {
         const {rtspDom, loadingClassName} = this.rtspInfo;
@@ -328,9 +337,9 @@ class RTSP {
         const {rtspDom, loadingClassName} = this.rtspInfo;
         videoDomCtx.clearRect(0, 0, 480, 270);
         videoDomCtx.fillStyle = '#e9230b';
-        videoDomCtx.font = '48px 微软雅黑';
+        videoDomCtx.font = '24px 微软雅黑';
         videoDomCtx.textAlign = 'center';
-        videoDomCtx.fillText('登录失败', 240, 159);
+        videoDomCtx.fillText(e, 240, 147);
 
         //更新状态
         this.live = false;

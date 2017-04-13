@@ -72,6 +72,7 @@ let createNewRtsp = (rtspUrl, socketName, loginInfo) => {
 
         for (let item in loginInfo) {
             if (loginInfo[item] != verifyParams[item]) {
+                wsocket.emit('login_error', `${item}参数错误`);
                 return console.log(`${item}参数错误`);
             }
         }

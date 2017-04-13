@@ -229,6 +229,7 @@ var RTSP = function () {
         key: 'doubleTabTogglePlay',
         value: function doubleTabTogglePlay(rtspDom) {
             //如果当前视频正在加载 return
+            console.log(rtspDom.classList);
             if ([].slice.call(rtspDom.classList).includes(this.rtspInfo.loadingClassName)) {
                 return console.log(1);
             }
@@ -276,20 +277,28 @@ var RTSP = function () {
                 ip = _rtspInfo.ip,
                 port = _rtspInfo.port,
                 channel = _rtspInfo.channel;
+            //用于后台验证登录信息是否正确
 
-            var token = username + '1:' + password + ':' + ip + ':' + port + ':' + channel;
-            //token跟的值是用于后台登录转码源的参数
+            var token = username + ':' + password + ':' + ip + ':' + port + ':' + channel;
+            //凭借socket地址 ip:port 是对应的socket视频组 token为登录信息
             var url = location.origin + '/' + ip + ':' + port + '?token=' + token;
-            this.rtspSocket = io(url, {
+            var rtspSocket = io(url, {
                 //重连次数
                 reconnectionAttempts: 3,
+                //超时时间
                 'timeout': 6000
             });
-            console.log(this.rtspSocket);
+
+            //将socket实例绑定到实例上
+            this.rtspSocket = rtspSocket;
+            //用于判断已经尝试重连次数
             var rtspSocketInfo = {
                 timeoutTime: 0
-            },
-                rtspSocket = this.rtspSocket;
+            };
+
+            rtspSocket.on('login_error', function () {
+                _this7.showError('登录失败,请检查登录信息!');
+            });
             //连接超时
             rtspSocket.on('connect_timeout', function () {
                 if (rtspSocketInfo.timeoutTime < 3) {
@@ -357,6 +366,7 @@ var RTSP = function () {
 
             this.live = false;
             rtspDom.classList.add(loadingClassName);
+            rtspDom.classList.remove('load-error');
         }
     }, {
         key: 'hideLoader',
@@ -378,9 +388,9 @@ var RTSP = function () {
 
             videoDomCtx.clearRect(0, 0, 480, 270);
             videoDomCtx.fillStyle = '#e9230b';
-            videoDomCtx.font = '48px 微软雅黑';
+            videoDomCtx.font = '24px 微软雅黑';
             videoDomCtx.textAlign = 'center';
-            videoDomCtx.fillText('登录失败', 240, 159);
+            videoDomCtx.fillText(e, 240, 147);
 
             //更新状态
             this.live = false;
