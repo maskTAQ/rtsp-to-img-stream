@@ -42,10 +42,10 @@ const getToken = (url) => {
 };
 //新建视频组
 let createNewRtsp = (rtspUrl, socketName, loginInfo) => {
-    //rtspUrl = "rtsp://mpv.cdn3.bigCDN.com:554/bigCDN/definst/mp4:bigbuckbunnyiphone_400.mp4"
+    //rtspUrl = "rtsp://admin:smt12345@117.64.146.57:554/h264/ch1/main/av_stream"
 
     //转码配置
-    let stream = new rtsp.FFMpeg({input: rtspUrl, rate: 30, resolution: '96x54', quality: 1000});
+    let stream = new rtsp.FFMpeg({input: rtspUrl, rate: 10, resolution: '48x27', quality: 50});
     stream.on('start', function() {
         console.log(socketName + ' 开始转码');
     });
@@ -70,7 +70,7 @@ let createNewRtsp = (rtspUrl, socketName, loginInfo) => {
             port: pt
         };
 
-        for (let item in loginInfo) {
+        for (let item in verifyParams) {
             if (loginInfo[item] != verifyParams[item]) {
                 wsocket.emit('login_error', `${item}参数错误`);
                 return console.log(`${item}参数错误`);

@@ -288,7 +288,7 @@ var RTSP = function () {
                 //重连次数
                 reconnectionAttempts: 3,
                 //超时时间
-                'timeout': 6000
+                'timeout': 60000
             });
 
             //将socket实例绑定到实例上
@@ -332,7 +332,7 @@ var RTSP = function () {
                     _this7.hideLoader();
                     _this7.showError('连接超时');
                 }
-            }, 15000);
+            }, 60000);
         }
     }, {
         key: 'liveImg',
@@ -410,8 +410,6 @@ var RTSP = function () {
     return RTSP;
 }();
 
-//let demo = new RTSPVideo();
-
 var _initialiseProps = function _initialiseProps() {
     var _this8 = this;
 
@@ -452,58 +450,4 @@ var _initialiseProps = function _initialiseProps() {
             _this8.fullScreenStatus = !_this8.fullScreenStatus;
         };
     };
-};
-
-window.onload = function () {
-    /*
-    url取参数->解码->调用RTSP
-    */
-    var GetRequest = function GetRequest() {
-        var url = location.search; //获取url中"?"符后的字串
-        var theRequest = {};
-        if (url.indexOf("?") != -1) {
-            var str = url.substr(1);
-            var strs = str.split("&");
-            for (var i = 0; i < strs.length; i++) {
-                theRequest[strs[i].split("=")[0]] = unescape(strs[i].split("=")[1]);
-            }
-        }
-        return theRequest;
-    };
-    var urlUnencrypt = function urlUnencrypt(code) {
-        code = unescape(code);
-        var c = String.fromCharCode(code.charCodeAt(0) - code.length);
-        for (var i = 1; i < code.length; i++) {
-            c += String.fromCharCode(code.charCodeAt(i) - c.charCodeAt(i - 1));
-        }
-        return c;
-    };
-    var params = GetRequest();
-
-    try {
-        //从url中取参数
-        var _JSON$parse = JSON.parse(urlUnencrypt(params.token)),
-            username = _JSON$parse.username,
-            password = _JSON$parse.password,
-            ip = _JSON$parse.ip,
-            port = _JSON$parse.port,
-            channel = _JSON$parse.channel;
-    } catch (e) {
-        alert('地址非法');
-    }
-    var rtspDom = document.getElementById('rtsp');
-    //加载rtsp
-
-    var demo = new RTSP({
-        username: username,
-        password: password,
-        ip: ip,
-        port: port,
-        channel: channel,
-        rtspDom: rtspDom,
-        loadingClassName: 'ball-scale-multiple'
-    }, {
-        //缩略图路径
-        thumbnailPath: '/src/img/logo.png'
-    });
 };

@@ -15,16 +15,18 @@
     基于rtsp-ffmpeg的二次封装。
 ## 使用说明
     将assets/ffmpeg/bin目录添加至环境变量
-    
+
     npm install && npm start
 
     激活socket视频转码组
     发送post请求至http://localhost:3000/rtsp
 
-    输入网址浏览
-    http://localhost:3000/rtsp?token=加密字符串
+    1. 输入网址浏览
+    http://localhost:3000/rtsp?params={username,password,ip,port,channel}
 
-    手动调用
+    2. 手动调用
+    import js/client.es5.js
+
     let demo = new RTSP(
       //必须参数
       {
@@ -44,3 +46,5 @@
         //缩略图路径 缺省值为'/src/img/logo.png'
         thumbnailPath: '/src/img/logo.png'
     });
+
+    注意如果访问的摄像头是通过端口映射出来的需要修改ffmpeg配置 在rtsp-ffmpeg源码中 可以参考[点我](https://github.com/maskTAQ/rtsp-ffmpeg)
