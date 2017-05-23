@@ -70,10 +70,13 @@ var RTSP = function () {
             //设置视频容器的宽高
             var _window = window,
                 outerWidth = _window.outerWidth,
+                innerWidth = _window.innerWidth,
                 outerHeight = _window.outerHeight;
+            //在ios webview中outerWidth问0
 
-            rtspDom.style.width = outerWidth + 'px';
-            rtspDom.style.height = window.outerWidth * 9 / 16 + 'px';
+            var width = outerWidth ? outerWidth : innerWidth;
+            rtspDom.style.width = width + 'px';
+            rtspDom.style.height = width * 9 / 16 + 'px';
             //生成视频canvas
             this.createVideoCanvas()
             //生成loading组件
@@ -416,8 +419,13 @@ var _initialiseProps = function _initialiseProps() {
     this.toggleFullScreen = function () {
         var _window2 = window,
             outerWidth = _window2.outerWidth,
-            outerHeight = _window2.outerHeight;
+            innerWidth = _window2.innerWidth,
+            outerHeight = _window2.outerHeight,
+            innerHeight = _window2.innerHeight;
 
+
+        var screenWidth = outerWidth ? outerWidth : innerWidth;
+        var screenHeight = outerHeight ? outerHeight : innerHeight;
 
         var rtspDom = _this8.rtspInfo.rtspDom;
         var videoDom = _this8.videoDom;
@@ -428,7 +436,7 @@ var _initialiseProps = function _initialiseProps() {
 
         //视频容器xy轴偏移长度
 
-        var excursion = Math.abs((outerWidth - outerHeight) / 2);
+        var excursion = Math.abs((screenWidth - screenHeight) / 2);
         return function () {
             if (_this8.fullScreenStatus) {
                 rtspDom.classList.remove('full-screen');

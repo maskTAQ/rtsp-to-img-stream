@@ -48,10 +48,12 @@ class RTSP {
             //判断是单击还是双击
             tabInterval: NaN
         }
-        //设置视频容器的宽高
-        let {outerWidth, outerHeight} = window;
-        rtspDom.style.width = outerWidth + 'px';
-        rtspDom.style.height = window.outerWidth * 9 / 16 + 'px';
+         //设置视频容器的宽高
+        let {outerWidth,innerWidth, outerHeight} = window;
+		//在ios webview中outerWidth问0
+		let width = outerWidth? outerWidth:innerWidth;
+        rtspDom.style.width = width+'px';
+        rtspDom.style.height = width * 9 / 16 + 'px';
         //生成视频canvas
         this.createVideoCanvas()
         //生成loading组件
@@ -287,15 +289,18 @@ class RTSP {
         img.src = url;
     }
     toggleFullScreen = () => {
-        const {outerWidth, outerHeight} = window;
+        const {outerWidth,innerWidth, outerHeight,innerHeight} = window;
 
-        const rtspDom = this.rtspInfo.rtspDom;
+		const screenWidth = outerWidth?outerWidth:innerWidth;
+		const screenHeight = outerHeight?outerHeight:innerHeight;
+		
+		const rtspDom = this.rtspInfo.rtspDom;
         const videoDom = this.videoDom;
 
         const {width, height} = rtspDom.style;
 
         //视频容器xy轴偏移长度
-        const excursion = Math.abs((outerWidth - outerHeight) / 2);
+        const excursion = Math.abs((screenWidth - screenHeight) / 2);
         return () => {
             if (this.fullScreenStatus) {
                 rtspDom.classList.remove('full-screen');
